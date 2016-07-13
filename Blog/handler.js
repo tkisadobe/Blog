@@ -16,7 +16,7 @@ var URL = "mongodb://localhost:27017/test";
 function start(response) {
     console.log("Request handler 'start' was called.");
     // console.log(response);
-    fs.readFile('./index.html', function (err, html) {
+    fs.readFile('./html/index.html', function (err, html) {
         if (err) {
             // if error response err
             response.writeHead(200, {"Content-Type": "text/html"});
@@ -34,7 +34,7 @@ function start(response) {
 
 function login(response, request) {
     console.log("login");
-    fs.readFile('./login.html',function (err,html) {
+    fs.readFile('./html/login.html',function (err,html) {
         if(err){
             response.writeHead(200,{"Content-Type":"text/html"});
             response.write(err.message);
@@ -46,12 +46,74 @@ function login(response, request) {
             response.end();
         }
     });
+}
 
+function loginjudge(response,postData) {
+    mongoClient.connect(URL,function (e,db) {
+        if(e){
+            console.log(e);
+        }
+        else{
+            var user=db.collection("user");
+            var result=checkPassword(user,postData.username,postData.password,function (result) {
+                if(result){
+                    insertSessions(user,postData);
+                    response.writeHead(200,{"Content-type":"text/html"});
+                    response.write("恭喜登陆成功,返回首页:"+'<a href="./load">'+start+'</a>');
+                    response.end();
+                }
+                else{
+                    response.writeHead(200,{"Content-type":"text/html"});
+                    response.write("登陆失败");
+                    response.end();
+                }
+            });
+        }
+    });
+}
+function insertSessions(collection,postData) {
+    var md5M=(postData);
+    collection.insert({name:postData.username},{sessions:[{md5Message:md5M},{md5Time:new Data()}]},
+    function (e,result) {
+        if(e){
+            return false;
+            console.log(e);
+        }
+        else{
+            if(result.n==1){
+                return true;
+                console.log("insertSessions succeed");
+            }
+            else{
+                return false;
+            }
+        }
+    })
+}
+
+function checkPassword(collection,name,password,cb) {
+    console.log("password is "+password);
+    collection.findOne({name:name},{password:1},function (e,result) {
+        if(e){
+            console.log(e);
+            return cb(false);
+        }
+        else{
+            console.log(result);
+            if(result.password==password){
+                console.log("***");
+                return cb(true);
+            }
+            else{
+                return cb(false);
+            }
+        }
+    });
 }
 
 function register(response,request) {
     console.log("register");
-    fs.readFile('./register.html',function (err,html) {
+    fs.readFile('./html/register.html',function (err,html) {
         if(err){
             response.writeHead(200,{"Content-Type":"text/html"});
             response.write(err.message);
@@ -127,5 +189,6 @@ exports.start = start;
 exports.login=login;
 exports.register=register;
 exports.load=load;
+exports.loginjudge=loginjudge;
 exports.upload = upload;
 exports.show = show;

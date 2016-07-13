@@ -14,7 +14,6 @@ http.createServer(function (req, res) {
         console.log(parts);
         console.log("####");
         Cookies[ parts[ 0 ].trim() ] = ( parts[ 1 ] || '' ).trim();
-
     });
 
     console.log(Cookies);
@@ -54,7 +53,7 @@ function addCookie(name, val, opt){
 
             }
 
-            this._setHeader.call(this.res, "Set-Cookie",array)
+            this._setHeader.call(thseis.res, "Set-Cookie",array)
 
         })
 

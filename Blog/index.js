@@ -10,8 +10,9 @@ var handle = {}
 handle["/"] = handler.start;
 handle["/start"] = handler.start;
 handle["/login"]=handler.login;
-handle["./register"]=handler.register;
-handle["./load"]=handler.load;
+handle["/register"]=handler.register;
+handle["/load"]=handler.load;
+handle["/loginjudge"]=handler.loginjudge;
 handle["/upload"] = handler.upload;
 handle["/show"] = handler.show;
 

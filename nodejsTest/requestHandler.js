@@ -59,12 +59,12 @@ function login(requset,response,postData){
         '</head>'+
         '<body>'+
         '<form action="/loginResult" method="post">'+
-        '<input type="text" value="name" name="username" id="username">'+ '</input>'+
+        '<input type="text" value="name" name="username" id="username">'+'</input>'+
         '<input type="text" value="password" name="password" id="password">'+'</input>'+
         '<input type="submit" onsubmit="encrypt()" value="login">'+'</input>'+
         '</form>'+
         '</body>'+
-        '</html>'
+        '</html>';
     response.writeHead(200,{"Content-type":"text/html"});
     response.write(body);
     response.end();
@@ -302,7 +302,7 @@ function checkPassword(collection,name,password,cb){
 }
 
 function insertSessions(collection,postData){
-    var md5M = md5(postData);
+    var md5M = (postData);
     collection.insert({name:postData.username},{sessions:[{md5Message:md5M},{md5Time:new Date()}]},
         function(e,result){
             if(e){
@@ -316,7 +316,7 @@ function insertSessions(collection,postData){
                     return false;
                 }
             }
-        });
+        })
 }
 
 exports.load = load;
