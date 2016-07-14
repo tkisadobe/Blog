@@ -5,13 +5,12 @@
 
 var mongoClient=require("mongodb").MongoClient;
 var md5=require("md5");
+var url = require("url");
 var ObjectID=require("mongodb").ObjectID;
 var querystring = require("querystring"),
     fs = require("fs"),
     formidable = require("formidable");
 var URL = "mongodb://localhost:27017/test";
-
-
 
 function start(response) {
     console.log("Request handler 'start' was called.");
@@ -78,6 +77,7 @@ function InsertPage(request,response,postData) {
                 var parts=Cookie.split('=');
                 Cookies[parts[0].trim()]=(parts[1] || '').trim();
             });
+            console.log();
             user.findOne({sessions:Cookies.message},{name:1},function (e,result) {
                 console.log(result);
                 var data={title:postData.title,body:postData.body,date:new Date(),author:result.name};
@@ -109,8 +109,8 @@ function loginjudge(response,postData) {
             var result=checkPassword(user,postData.username,postData.password,function (result) {
                 if(result){
                     insertSessions(user,postData);
-                    response.writeHead(200,{"Content-type":"text/html"});
-                    response.write("恭喜登陆成功,返回首页:"+'<a href="./load">'+start+'</a>');
+                    response.writeHead(200,{"Content-type":"text/html","Set-Cookie":"message"+md5(postData)});
+                    response.write("恭喜登陆成功,返回首页:"+'<a href="/load">'+"start"+'</a>');
                     response.end();
                 }
                 else{
@@ -179,6 +179,40 @@ function register(response,request) {
     
 }
 
+function InsertUser(request,response,postData) {
+    var reqstr=url.parse(request.url).query;
+    var reqdata=querystring.parse(reqstr);
+    var data={name:reqdata.username,password:reqdata.password,age:reqdata.age};
+    mongoClient.connect(URL,function (e,db) {
+        if(e){
+            console.log(e);
+        }
+        else{
+            var user=db.collection("user");
+            user.findOne({name:reqdata.username},function (e,result) {
+                if(result==null){
+                    collection.insert(data,function (e,result) {
+                        if(e){
+                            console.log(e);
+                        }
+                        else{
+                            console.log("用户注册成功");
+                            response.writeHead(200,{"Content-Type":"text/html"});
+                            response.write("用户注册成功");
+                            response.end();
+                        }
+                    });
+                }
+                else{
+                    response.writeHead(200,{"Content-Type":"text/html"});
+                    response.write("用户名已存在");
+                    response.end();
+                }
+            })
+        }
+    })
+}
+
 function load(request,response,postData) {
     mongoClient.connect(URL,function (e,db) {
         if(e){
@@ -243,6 +277,7 @@ exports.load=load;
 exports.loginjudge=loginjudge;
 exports.writeBlog=writeBlog;
 exports.InsertPage=InsertPage;
+exports.InsertUser=InsertUser;
 
 exports.upload = upload;
 exports.show = show;

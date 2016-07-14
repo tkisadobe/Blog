@@ -26,8 +26,6 @@ function homePage(request,response ,titleList ,postData){
     response.writeHead(200, {"Content-type": "text/html" ,});
     response.write(body);
     response.end();
-
-
 }
 
 //添加博客界面
