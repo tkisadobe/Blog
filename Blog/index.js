@@ -17,7 +17,6 @@ handle["/loginjudge"]=handler.loginjudge;
 handle["/writeBlog"]=handler.writeBlog;
 handle["/InsertPage"]=handler.InsertPage;
 handle["/findBlogger"]=handler.findBlogger;
-handle["/upload"] = handler.upload;
-handle["/show"] = handler.show;
+
 
 server.start(router.route, handle);

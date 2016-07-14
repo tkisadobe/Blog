@@ -12,7 +12,7 @@ var querystring = require("querystring"),
     formidable = require("formidable");
 var URL = "mongodb://localhost:27017/test";
 
-function start(response) {
+function start(response,request,postData) {
     console.log("Request handler 'start' was called.");
     // console.log(response);
     fs.readFile('./html/index.html', function (err, html) {
@@ -31,7 +31,7 @@ function start(response) {
     });
 }
 
-function login(response,postData) {
+function login(response,request,postData) {
     console.log("login");
     fs.readFile('./html/login.html',function (err,html) {
         if(err){
@@ -63,7 +63,7 @@ function writeBlog(response,postData) {
     });
 }
 
-function InsertPage(request,response,postData) {
+function InsertPage(response,request,postData) {
     mongoClient.connect(URL,function (e,db) {
         if(e){
             console.log(e);
@@ -73,7 +73,7 @@ function InsertPage(request,response,postData) {
             var user=db.collection("user");
             var Cookies={};
             console.log(request.headers.cookie);
-            request.headers.cookie && request.headers.cookie.split(';').foreach(function (Cookie) {
+            request.headers.cookie && request.headers.cookie.split(';').forEach(function (Cookie) {
                 var parts=Cookie.split('=');
                 Cookies[parts[0].trim()]=(parts[1] || '').trim();
             });
@@ -98,7 +98,7 @@ function InsertPage(request,response,postData) {
 
 }
 
-function loginjudge(request,response,postData) {
+function loginjudge(response,request,postData) {
     mongoClient.connect(URL,function (e,db) {
         if(e){
             console.log(e);
@@ -177,7 +177,7 @@ function register(response,request) {
     });
 }
 
-function InsertUser(request,response,postData) {
+function InsertUser(response,request,postData) {
     var reqstr=url.parse(request.url).query;
     var reqdata=querystring.parse(reqstr);
     var data={name:reqdata.username,password:reqdata.password,age:reqdata.age};
@@ -189,14 +189,14 @@ function InsertUser(request,response,postData) {
             var user=db.collection("user");
             user.findOne({name:reqdata.username},function (e,result) {
                 if(result==null){
-                    collection.insert(data,function (e,result) {
+                    user.insert(data,function (e,result) {
                         if(e){
                             console.log(e);
                         }
                         else{
-                            console.log("用户注册成功");
+                            console.log("register succeed");
                             response.writeHead(200,{"Content-Type":"text/html"});
-                            response.write("用户注册成功");
+                            response.write("register succeed");
                             response.end();
                         }
                     });
@@ -283,35 +283,7 @@ function showBlog(response,result) {
     response.end();
 }
 
-function upload(response, request) {
-    console.log("Request handler 'upload' was called.");
 
-    var form = new formidable.IncomingForm();
-    console.log("about to parse");
-    form.parse(request, function (error, fields, files) {
-        console.log("parsing done");
-        fs.renameSync(files.upload.path, "/Users/lihaiyan/Downloads/1.jpg");
-        response.writeHead(200, {"Content-Type": "text/html"});
-        response.write("received image:<br/>");
-        response.write("<img src='/show' />");
-        response.end();
-    });
-}
-
-function show(response) {
-    console.log("Request handler 'show' was called.");
-    fs.readFile("/Users/lihaiyan/Downloads/1.JPG", "binary", function (error, file) {
-        if (error) {
-            response.writeHead(500, {"Content-Type": "text/plain"});
-            response.write(error + "\n");
-            response.end();
-        } else {
-            response.writeHead(200, {"Content-Type": "image/png"});
-            response.write(file, "binary");
-            response.end();
-        }
-    });
-}
 exports.start = start;
 exports.login=login;
 exports.register=register;
@@ -322,5 +294,3 @@ exports.InsertPage=InsertPage;
 exports.InsertUser=InsertUser;
 exports.findBlogger=findBlogger;
 
-exports.upload = upload;
-exports.show = show;
