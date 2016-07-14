@@ -48,6 +48,57 @@ function login(response, request) {
     });
 }
 
+function writeBlog(response) {
+    console.log("write a blog");
+    fs.readFile('./html/writeBlog.html',function (err,html) {
+        if(err){
+            response.writeHead(200,{"Content-type":"text/html"});
+            response.write(err.message);
+            response.end();
+        }
+        else{
+            response.writeHead(200,{"Content-Type":"text/html"});
+            response.write(html);
+            response.end();
+        }
+    });
+}
+
+function InsertPage(request,response,postData) {
+    mongoClient.connect(URL,function (e,db) {
+        if(e){
+            console.log(e);
+        }
+        else{
+            var page=db.collection("page");
+            var user=db.collection("user");
+            var Cookies={};
+            console.log(request.headers.cookie);
+            request.headers.cookie && request.headers.cookie.split(';').foreach(function (Cookie) {
+                var parts=Cookie.split('=');
+                Cookies[parts[0].trim()]=(parts[1] || '').trim();
+            });
+            user.findOne({sessions:Cookies.message},{name:1},function (e,result) {
+                console.log(result);
+                var data={title:postData.title,body:postData.body,date:new Date(),author:result.name};
+                page.insert(data,function (e,result) {
+                    if(e){
+                        console.log(e);
+                    }
+                    else{
+                        console.log(result);
+                        response.writeHead(200,{"Content-Type":"text/html"});
+                        response.write("提交成功");
+                        response.end();
+                        db.close();
+                    }
+                })
+            })
+        }
+    })
+
+}
+
 function loginjudge(response,postData) {
     mongoClient.connect(URL,function (e,db) {
         if(e){
@@ -76,13 +127,13 @@ function insertSessions(collection,postData) {
     collection.insert({name:postData.username},{sessions:[{md5Message:md5M},{md5Time:new Data()}]},
     function (e,result) {
         if(e){
-            return false;
             console.log(e);
+            return false;
         }
         else{
             if(result.n==1){
-                return true;
                 console.log("insertSessions succeed");
+                return true;
             }
             else{
                 return false;
@@ -190,5 +241,8 @@ exports.login=login;
 exports.register=register;
 exports.load=load;
 exports.loginjudge=loginjudge;
+exports.writeBlog=writeBlog;
+exports.InsertPage=InsertPage;
+
 exports.upload = upload;
 exports.show = show;

@@ -13,6 +13,8 @@ handle["/login"]=handler.login;
 handle["/register"]=handler.register;
 handle["/load"]=handler.load;
 handle["/loginjudge"]=handler.loginjudge;
+handle["/writeBlog"]=handler.writeBlog;
+handle["/InsertPage"]=handler.InsertPage;
 handle["/upload"] = handler.upload;
 handle["/show"] = handler.show;
 
