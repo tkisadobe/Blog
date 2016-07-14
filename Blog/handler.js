@@ -31,7 +31,7 @@ function start(response) {
     });
 }
 
-function login(response, request) {
+function login(response,postData) {
     console.log("login");
     fs.readFile('./html/login.html',function (err,html) {
         if(err){
@@ -47,11 +47,11 @@ function login(response, request) {
     });
 }
 
-function writeBlog(response) {
+function writeBlog(response,postData) {
     console.log("write a blog");
     fs.readFile('./html/writeBlog.html',function (err,html) {
         if(err){
-            response.writeHead(200,{"Content-type":"text/html"});
+            response.writeHead(200, {"Content-type":"text/html"});
             response.write(err.message);
             response.end();
         }
@@ -77,7 +77,6 @@ function InsertPage(request,response,postData) {
                 var parts=Cookie.split('=');
                 Cookies[parts[0].trim()]=(parts[1] || '').trim();
             });
-            console.log();
             user.findOne({sessions:Cookies.message},{name:1},function (e,result) {
                 console.log(result);
                 var data={title:postData.title,body:postData.body,date:new Date(),author:result.name};
@@ -99,7 +98,7 @@ function InsertPage(request,response,postData) {
 
 }
 
-function loginjudge(response,postData) {
+function loginjudge(request,response,postData) {
     mongoClient.connect(URL,function (e,db) {
         if(e){
             console.log(e);
@@ -176,7 +175,6 @@ function register(response,request) {
             response.end();
         }
     });
-    
 }
 
 function InsertUser(request,response,postData) {
@@ -240,6 +238,50 @@ function load(request,response,postData) {
     })
 }
 
+function findBlogger(request,response) {
+    mongoClient.connect(URL,function (e,db) {
+        if(e){
+            console.log(e);
+        }
+        else{
+            var page=db.collection("page");
+            var reqData=querystring.parse(url.parse(request.url).query);
+            console.log(reqData);
+            var objectId=new ObjectID(reqData._id);
+            collection.findOne({_id:objectId},function (e,result) {
+                if(e){
+                    console.log(e);
+                }
+                else{
+                    console.log(result);
+                    showBlog(response,result);
+                    db.close();
+                }
+            })
+
+        }
+    })
+}
+function showBlog(response,result) {
+    var id = '<a href=/remove?' + result._id + '>' + "delete" + '</a>';
+    var body = '<html>' +
+        '<head>' +
+        '<meta http-equiv="Content-Type" content="text/html; ' +
+        'charset=UTF-8" />' +
+        '</head>' +
+        '<body>' +
+        '<article>' +
+        '<h1>' + "" + result.title + '</h1>' +
+        '<p>' + "" + result.body + '</p>' +
+        '<p>' + result.date + '</p>' +
+        '</article>' +
+        id +
+        '</body>' +
+        '</html>'
+    response.writeHead(200, {"Content-type": "text/html"});
+    response.write(body);
+    response.end();
+}
 
 function upload(response, request) {
     console.log("Request handler 'upload' was called.");
@@ -278,6 +320,7 @@ exports.loginjudge=loginjudge;
 exports.writeBlog=writeBlog;
 exports.InsertPage=InsertPage;
 exports.InsertUser=InsertUser;
+exports.findBlogger=findBlogger;
 
 exports.upload = upload;
 exports.show = show;

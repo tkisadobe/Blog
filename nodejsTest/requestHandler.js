@@ -95,7 +95,7 @@ function register(requset,response){
     var body = '<html>'+
         '<head>'+
         '<meta http-equiv="CONTENT-TYPE" content="text/html" charset="utf-8"/>'+
-        '</head>'+
+        '</head>'+re
         '<body>'+
         '<form action="/insertUser">'+
         '<input type="text" value="name" name="username">'+ '</input>'+
