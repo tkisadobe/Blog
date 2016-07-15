@@ -95,7 +95,7 @@ function register(requset,response){
     var body = '<html>'+
         '<head>'+
         '<meta http-equiv="CONTENT-TYPE" content="text/html" charset="utf-8"/>'+
-        '</head>'+re
+        '</head>'+
         '<body>'+
         '<form action="/insertUser">'+
         '<input type="text" value="name" name="username">'+ '</input>'+
@@ -124,7 +124,7 @@ function showBlogger(response,result){
         '<p>' + "" + result.body + '</p>' +
         '<p>' + result.date + '</p>' +
         '</article>' +
-        id +
+        id+
         '</body>' +
         '</html>'
     response.writeHead(200, {"Content-type": "text/html"});
@@ -228,7 +228,7 @@ function remove(request, response) {
             console.log(e);
         }
         else {
-            var collection = db.collection("blogger");
+            var collection = db.collection("rDr");
             collection.remove({_id: objectId}, function (e, result) {
                 response.writeHead(200, {"Content-type": "text/plain"});
                 console.log(e);

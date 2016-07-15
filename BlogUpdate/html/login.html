@@ -7,10 +7,10 @@
 <body>
 <h1>欢迎来到登陆界面</h1>
 <p>请输入用户名和密码:</p>
-<form action="/loginjudge" method="post">
+<form action="/loginJudge" method="post">
     <input type="text" placeholder="用户名" name="username" id="username"> </input> </br>
     <input type="text" placeholder="密码" name="password" id="password"> </input> </br>
-    <input type="submit" value="登陆"> </input>
+    <input type="submit" onsubmit="encrypt()" value="登陆"> </input>
 </form>
 </body>
 </html>
