@@ -38,7 +38,7 @@ function writeBlog(request,response,postData) {
         'charset=UTF-8" />' +
         '</head>' +
         '<body>' +
-        '<h1>写下你的心情</h1>'+
+        '<h1>随笔</h1>'+
         '<form action="/insertPage" method="post">' +
         '<input type="text" placeholder="标题" name="title"/>' +'</br>'+
         '<textarea placeholder="内容" name="body"></textarea>' +'</br>'+
@@ -83,7 +83,7 @@ function loginJudge(request,response,postData) {
                 if(result){
                     insertSessions(user,postData);
                     response.writeHead(200,{"Content-Type":"text/html","Set-Cookie":"message"+md5(postData)});
-                    response.write("login succeed"+'<a href="/load">'+"indexPage"+'</a>');
+                    response.write("login succeed"+'</br>'+'<a href="/load">'+"Go back indexPage"+'</a>');
                     response.end();
                 }
                 else{
@@ -209,8 +209,8 @@ function insertPage(request,response,postData) {
                     }
                     else{
                         console.log(result);
-                        response.writeHead(200,{"Content-Type":"text/plain"});
-                        response.write("add page succeed");
+                        response.writeHead(200,{"Content-Type":"text/html"});
+                        response.write("add page succeed"+'</br>'+'<a href="/load">'+"Go back indexPage"+'</a>');
                         response.end();
                         db.close();
                     }
@@ -232,12 +232,12 @@ function removePage(request,response) {
         else{
             var page=db.collection("page");
             page.remove({_id:objectID},function (e,result) {
-                response.writeHead(200,{"Content-Type":"text/plain"});
+                response.writeHead(200,{"Content-Type":"text/html"});
                 if(e){
                     response.write("delete err");
                 }
                 else{
-                    response.write("delete succeed");
+                    response.write("delete succeed"+'</br>'+'<a href="/load">'+"Go back indexPage"+'</a>');
                 }
                 response.end();
             })
@@ -265,7 +265,7 @@ function insertUser(request,response,postData) {
                         else{
                             console.log("add user succeed");
                             response.writeHead(200,{"Content-type":"text/html"});
-                            response.write("register succeed");
+                            response.write("register succeed"+'</br>'+'<a href="/load">'+"Go back indexPage"+'</a>');
                             response.end();
                         }
                     });
