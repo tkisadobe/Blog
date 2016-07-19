@@ -21,7 +21,8 @@ function indexPage(request,response,titleList,postData) {
         '<h1 >简单的博客</h1>'+
         '<a href="/register">'+"注册"+'</a>'+'</br>'+
         '<a href="/login">'+"登陆"+'</a>'+'</br>'+
-        '<a href="/writeBlog">'+"写博客"+ '</a>'+
+        '<a href="/writeBlog">'+"写博客"+ '</a>'+'</br>'+
+        '<a href="/selectBlog">'+"找博客"+ '</a>'+
         '<li/>'+
         '<ul>' + '<li value="hot blogger">'+'</li>'+ titleList + '</ul>' +
         '</body>' +
@@ -30,6 +31,26 @@ function indexPage(request,response,titleList,postData) {
     response.write(body);
     response.end();
 }
+
+function selectBlog(request,response,postData) {
+    var body='<html>' +
+        '<head>' +
+        '<meta http-equiv="Content-Type" content="text/html; ' +
+        'charset=UTF-8" />' +
+        '</head>' +
+        '<body>' +
+        '<h1>查找喜欢的文章</h1>'+
+        '<form action="/selectOneBlog" method="post">' +
+        '<input type="text" placeholder="标题" name="title"/>' +'</br>'+
+        '<input type="submit" value="查找">' +
+        '</form>' +
+        '</body>' +
+        '</html>';
+    response.writeHead(200, {"Content-type": "text/html"});
+    response.write(body);
+    response.end();
+}
+
 
 function writeBlog(request,response,postData) {
     var body = '<html>' +
@@ -49,7 +70,6 @@ function writeBlog(request,response,postData) {
     response.writeHead(200, {"Content-type": "text/html"});
     response.write(body);
     response.end();
-    console.log("newBlogger success");
 }
 
 function login(request,response,postData) {
@@ -72,6 +92,7 @@ function login(request,response,postData) {
     response.end();
 }
 
+
 function loginJudge(request,response,postData) {
     mongoClient.connect(URL,function (e,db) {
         if(e){
@@ -82,7 +103,7 @@ function loginJudge(request,response,postData) {
             var result=checkPassword(user,postData.username,postData.password,function (result) {
                 if(result){
                     insertSessions(user,postData);
-                    response.writeHead(200,{"Content-Type":"text/html","Set-Cookie":"message"+md5(postData)});
+                    response.writeHead(200,{"Content-Type":"text/html","Set-Cookie":"message="+md5(postData)});
                     response.write("login succeed"+'</br>'+'<a href="/load">'+"Go back indexPage"+'</a>');
                     response.end();
                 }
@@ -117,7 +138,7 @@ function register(request,response,postData) {
 }
 
 function showBlog(response,result) {
-    var id = '<a href=/removePage?' + result._id + '>' + "delete" + '</a>';
+    var del = '<a href=/removePage?' + result._id + '>' + "delete" + '</a>';
     var body = '<html>' +
         '<head>' +
         '<meta http-equiv="Content-Type" content="text/html; ' +
@@ -129,9 +150,14 @@ function showBlog(response,result) {
         '<p>' + "" + result.body + '</p>' +
         '<p>' + result.date + '</p>' +
         '</article>' +
-        id+
+        del+'</br>'+
+        '</br>'+
+        '<form action="/updatePage" method="post">'+
+        '<textarea placeholder="更新的文本内容" name="body"></textarea></br>'+
+        '<input type="submit" value="update">'+
+        '</form>'+
         '</body>' +
-        '</html>'
+        '</html>';
     response.writeHead(200, {"Content-type": "text/html"});
     response.write(body);
     response.end();
@@ -186,6 +212,37 @@ function findBlog(request,response) {
     });
 }
 
+
+function selectOneBlog(request,response,postData) {
+    mongoClient.connect(URL,function (e,db) {
+        if(e){
+            console.log(e);
+        }
+        else{
+            var page=db.collection("page");
+            page.find({title:postData.title},function (e,result) {
+                if(e){
+                    console.log(e);
+                }
+                else{
+                     console.log(result);
+                    if(result) {
+                        showBlog(response, result);
+                        db.close();
+                    }
+                    else{
+                        response.writeHead(200,{"Content-Type":"text/plain"});
+                        response.write("Don't find");
+                        response.end();
+                        db.close();
+                    }
+                }
+            });
+
+        }
+    });
+}
+
 function insertPage(request,response,postData) {
     mongoClient.connect(URL,function (e,db) {
         if(e){
@@ -200,9 +257,11 @@ function insertPage(request,response,postData) {
                 var parts=Cookie.split('=');
                 Cookies[parts[0].trim()]=(parts[1] || '').trim();
             });
-            user.findOne({sessions:Cookies.message},{name:1},function (e,result) {
+            console.log(Cookies.message);
+            user.findOne({sessions:Cookies.message},{},function (e,result) {
                 console.log(result);
-                var data={title:postData.title,body:postData.body,date:new Date(),author:result.name};
+                var ownerId = new ObjectID(result._id);
+                var data={title:postData.title,body:postData.body,date:new Date(),author:ownerId};
                 page.insert(data,function (e,result) {
                     if(e){
                         console.log(e);
@@ -220,6 +279,7 @@ function insertPage(request,response,postData) {
     });
 
 }
+
 
 function removePage(request,response) {
     var reqStr=url.parse(request.url).query;
@@ -244,6 +304,31 @@ function removePage(request,response) {
         }
     })
     
+}
+function updatePage(request,response,postData) {
+    console.log(postData.body);
+    var reqStr=url.parse(request.url).query;
+    var mongodb=require("mongodb");
+    var objectID=mongodb.ObjectID(reqStr);
+    mongoClient.connect(URL,function (e,db) {
+        if(e){
+            console.log(e);
+        }
+        else{
+            var page=db.collection("page");
+            console.log(objectID);
+            page.update({_id:objectID},{$set:{body:postData.body}},function (e,result) {
+                response.writeHead(200,{"Content-Type":"text/html"});
+                if(e){
+                    response.write("update err");
+                }
+                else{
+                    response.write("update succeed"+'</br>'+'<a href="/load">'+"Go back indexPage"+'</a>')
+                }
+                response.end();
+            })
+        }
+    })
 }
 
 function insertUser(request,response,postData) {
@@ -327,3 +412,6 @@ exports.findBlog=findBlog;
 exports.insertPage=insertPage;
 exports.removePage=removePage;
 exports.insertUser=insertUser;
+exports.updatePage=updatePage;
+exports.selectBlog=selectBlog;
+exports.selectOneBlog=selectOneBlog;
