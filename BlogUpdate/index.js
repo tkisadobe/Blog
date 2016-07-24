@@ -5,7 +5,7 @@ var server=require('./server');
 var router=require('./router');
 var requestHandler=require('./requestHandler');
 
-var handle={}
+var handle={};
 handle["/"]=requestHandler.load;
 handle["/load"]=requestHandler.load;
 handle["/writeBlog"]=requestHandler.writeBlog;
