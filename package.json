@@ -10,7 +10,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bower": "^1.7.9",
     "ejs": "^2.4.2",
-    "express": "^4.14.0"
+    "express": "^4.14.0",
+    "handlebars": "^4.0.5",
+    "mongodb": "latest",
+    "md5": "latest",
+    "formidable": "latest"
   }
 }
