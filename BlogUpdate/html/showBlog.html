@@ -1,16 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+<link rel="stylesheet" href="../static/bower_components/bootstrap/dist/css/bootstrap.min.css">
 <head>
     <meta charset="UTF-8">
     <title>showBlog</title>
 </head>
-var id=<a href=/removePage?result._id>delete</a>;
+
 <body>
 <article>
-    <h1>result.title</h1>
-    <p>result.body</p>
-    <p>result.date</p>
+    <h1>{{result.title}}</h1>
+    <p>{{result.body}}</p>
+    <p>{{result.date}}</p>
+    <p>标签:{{result.tag}}</p>
 </article>
-id
+<a href=/removePage?{{result._id}}>删除</a>
+<a href=/updatePage?{{result._id}}>更新</a>
+<form action="/updatePage" method="post">
+    <textarea placeholder="更新的文本内容" name="body" data-value="{{result.body}}"></textarea></br>
+    <input type="submit" value="update">
+</form>
 </body>
 </html>

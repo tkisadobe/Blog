@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+<link rel="stylesheet" href="../static/bower_components/bootstrap/dist/css/bootstrap.min.css">
 <head>
     <meta charset="UTF-8">
     <title>写博客</title>
 </head>
 <body>
-<h1>写下你的心情</h1>
+<h1>随笔</h1>
 <form action="/insertPage" method="post">
     <input type="text" placeholder="标题" name="title"> </input></br>
-    <textarea placeholder="内容" name="text"></textarea></br>
+    <textarea placeholder="内容" name="body"></textarea></br>
+    <input type="text" placeholder="关键词" name="tag"></br>
     <input type="submit" value="提交"> </input>
 </form>
 </body>

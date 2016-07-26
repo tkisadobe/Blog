@@ -15,15 +15,15 @@ function route(handle, pathname, request, response, postData) {
             (extname === '.js') || (extname === '.css')
             || (extname === '.map')
         ) {
-            contentType = 'text/html';
+            var contentType = 'text/html';
             if (extname === '.js')
                 contentType = 'text/javascript';
             else if (extname === '.css')
                 contentType = 'text/css';
             fs.readFile(filePath, function (error, content) {
-                console.log('error', error);
+                //console.log('error', error);
                 if (error) {
-                    console.log('real error', error);
+                    //console.log('real error', error);
                     if (error.code == 'ENOENT') {
                         fs.readFile('./404.html', function (error, content) {
                             response.writeHead(200, {'Content-Type': contentType});

@@ -5,16 +5,17 @@ var mongoClient = require("mongodb").MongoClient;
 var querystring = require("querystring");
 var url = require("url");
 var md5 = require("md5");
+var util = require('util');
 var ObjectID = require("mongodb").ObjectID;
 var URL = "mongodb://localhost:27017/test";
 var fs = require("fs"),
-     formidable = require("formidable");
+    formidable = require("formidable");
 var handlebars = require('handlebars');
 
 
-function render_template(template_str, template_data,response) {
+function render_template(template_str, template_data, response) {
     fs.readFile(template_str, 'utf-8', function (error, source) {
-        console.log('err', error);
+        //console.log('err', error);
         handlebars.registerHelper('custom_title', function (title) {
             var words = title.split(' ');
             for (var i = 0; i < words.length; i++) {
@@ -28,7 +29,6 @@ function render_template(template_str, template_data,response) {
         var html = '';
         var template = handlebars.compile(source);
         html = template(template_data);
-        console.log(html);
         response.writeHead(200, {"Content-type": "text/html"});
         response.write(html);
         response.end();
@@ -39,78 +39,45 @@ function render_template(template_str, template_data,response) {
 function indexPage(request, response, titleList, postData) {
     // var template = Handlebars.compile('hml/index.html');
     // 这里传值
+    console.log('index',util.inspect(titleList, false, null));
     var data = {
-        title: 'practical node.js',
-        author: '@azat_co',
-        tags: ['express', 'node', 'javascript']
+        title: '简单的博客',
+        author: '@lhy',
+        tags: ['express', 'node', 'javascript'],
+        articles:titleList
     };
     // 这里把需要模版地址写好，注意是相对于本文件的
-    render_template('html/index.html', data,response);
-    //console.log('body');
-    //response.writeHead(200, {"Content-type": "text/html"});
-    //response.write(body);
-    //response.end();
+    render_template('html/index.html', data, response);
 }
 
 function selectBlog(request, response, postData) {
-    var body = '<html>' +
-        '<head>' +
-        '<meta http-equiv="Content-Type" content="text/html; ' +
-        'charset=UTF-8" />' +
-        '</head>' +
-        '<body>' +
-        '<h1>查找喜欢的文章</h1>' +
-        '<form action="/selectOneBlog" method="post">' +
-        '<input type="text" placeholder="标题" name="title"/>' + '</br>' +
-        '<input type="submit" value="查找">' +
-        '</form>' +
-        '</body>' +
-        '</html>';
-    response.writeHead(200, {"Content-type": "text/html"});
-    response.write(body);
-    response.end();
+    var data = {
+        title: '查找文章',
+        author: '@lhy',
+        tags: ['express', 'node', 'javascript']
+    };
+    render_template('html/selectBlog.html', data, response);
+
 }
 
 
 function writeBlog(request, response, postData) {
-    var body = '<html>' +
-        '<head>' +
-        '<meta http-equiv="Content-Type" content="text/html; ' +
-        'charset=UTF-8" />' +
-        '</head>' +
-        '<body>' +
-        '<h1>随笔</h1>' +
-        '<form action="/insertPage" method="post">' +
-        '<input type="text" placeholder="标题" name="title"/>' + '</br>' +
-        '<textarea placeholder="内容" name="body"></textarea>' + '</br>' +
-        '<input type="text" placeholder="标签" name="tag1">' + '</br>' +
-        '<input type="submit" value="提交">' +
-        '</form>' +
-        '</body>' +
-        '</html>';
-    response.writeHead(200, {"Content-type": "text/html"});
-    response.write(body);
-    response.end();
+    var data={
+        title:'随笔',
+        author:'@lhy',
+        tags: ['express', 'node', 'javascript']
+    };
+    render_template('html/writeBlog.html', data, response);
 }
 
 function login(request, response, postData) {
-    var body = '<html>' +
-        '<head>' +
-        '<meta http-equiv="CONTENT-TYPE" content="text/html" charset="utf-8"/>' +
-        '</head>' +
-        '<body>' +
-        '<h1>欢迎来到登陆界面</h1>' +
-        '<p>请输入用户名和密码:</p>' +
-        '<form action="/loginJudge" method="post">' +
-        '<input type="text" placeholder="用户名" name="username" id="username">' + ' </input>' + '</br>' +
-        '<input type="text" placeholder="密码" name="password" id="password">' + ' </input>' + '</br>' +
-        '<input type="submit" value="登陆">' + ' </input>' +
-        '</form>' +
-        '</body>' +
-        '</html>';
-    response.writeHead(200, {"Content-type": "text/html"});
-    response.write(body);
-    response.end();
+    var data={
+        title:'登陆',
+        author:'@lhy',
+        tags: ['express', 'node', 'javascript']
+    };
+    render_template('html/login.html', data, response);
+
 }
 
 
@@ -139,50 +106,23 @@ function loginJudge(request, response, postData) {
 }
 
 function register(request, response, postData) {
-    var body = '<html>' +
-        '<head>' +
-        '<meta http-equiv="CONTENT-TYPE" content="text/html" charset="utf-8"/>' +
-        '</head>' +
-        '<body>' +
-        '<h1>欢迎来到注册界面</h1>' +
-        '<p>请填写一下信息:</p>' +
-        '<form action="/insertUser">' +
-        '<input type="text" placeholder="用户名" name="username"">' + '</input>' + '</br>' +
-        '<input type="text" placeholder="密码" name="password">' + ' </input>' + '</br>' +
-        '<input type="submit" value="注册">' + ' </input>' +
-        '</form>' +
-        '</body>' +
-        '</html>'
-    response.writeHead(200, {"Content-type": "text/html"});
-    response.write(body);
-    response.end();
+    var data={
+        title:'注册',
+        author:'@lhy',
+        tags: ['express', 'node', 'javascript']
+    };
+    render_template('html/register.html', data, response);
 }
 
-function showBlog(response, result) {
-    var del = '<a href=/removePage?' + result._id + '>' + "delete" + '</a>';
-    var body = '<html>' +
-        '<head>' +
-        '<meta http-equiv="Content-Type" content="text/html; ' +
-        'charset=UTF-8" />' +
-        '</head>' +
-        '<body>' +
-        '<article>' +
-        '<h1>' + "" + result.title + '</h1>' +
-        '<p>' + "" + result.body + '</p>' +
-        '<p>' + result.date + '</p>' +
-        '<p>' + result.tag + '</p>' +
-        '</article>' +
-        del + '</br>' +
-        '</br>' +
-        '<form action="/updatePage" method="post">' +
-        '<textarea placeholder="更新的文本内容" name="body"></textarea></br>' +
-        '<input type="submit" value="update">' +
-        '</form>' +
-        '</body>' +
-        '</html>';
-    response.writeHead(200, {"Content-type": "text/html"});
-    response.write(body);
-    response.end();
+function showBlog(request, response, result) {
+    var data = {
+        author: '@lhy',
+        tags: ['express', 'node', 'javascript'],
+        result: result,
+        request:request
+    };
+    //console.log('this is null',util.inspect(result, false, null));
+    render_template('html/showBlog.html', data, response);
 }
 
 function load(request, response, postData) {
@@ -194,39 +134,40 @@ function load(request, response, postData) {
             var page = db.collection('page');
             var user = db.collection('user');
             var titleList = "";
-            var sign = 0;
             page.find({}, {title: 1}).toArray(function (e, items) {
                 if (e) {
                     console.log(e);
                 }
                 else {
-                    for (var i = 0; i < items.length; i++) {
-                        titleList +=
-                            '<a href=/findBlog?_id=' + items[i]._id + '>' + '<li>' + items[i].title + '</li>' + '</a>';
-                    }
-                    indexPage(request, response, titleList, postData, sign);
+                     for (var i = 0; i < items.length; i++) {
+                         titleList +=
+                             '<a href=/findBlog?_id=' + items[i]._id + '>' + '<li>' + items[i].title + '</li>' + '</a>';
+                     }
+                    indexPage(request, response, items, postData);
                 }
             });
         }
     });
 }
-function findBlog(request, response) {
+function findBlog(request, response,postData) {
     mongoClient.connect(URL, function (e, db) {
         if (e) {
-            console.log(e);
+            console.log('error',e);
+            response.write('fix');
         }
         else {
             var page = db.collection("page");
             var reqData = querystring.parse(url.parse(request.url).query);
-            console.log(reqData);
+            console.log('req',reqData);
             var objectID = new ObjectID(reqData._id);
             page.findOne({_id: objectID}, function (e, result) {
                 if (e) {
                     console.log(e);
                 }
                 else {
-                    console.log(result);
-                    showBlog(response, result);
+                    insertSessions(page,postData);
+                    console.log(util.inspect(result, false, null));
+                    showBlog(request,response, result);
                     db.close();
                 }
             });
@@ -282,7 +223,7 @@ function insertPage(request, response, postData) {
             console.log(Cookies.message);
             user.findOne({sessions: Cookies.message}, {}, function (e, result) {
                 console.log(result);
-                var ownerId = new ObjectID();
+                var ownerId = new ObjectID(postData._id);
                 var data = {
                     title: postData.title,
                     body: postData.body,
@@ -332,25 +273,25 @@ function removePage(request, response) {
         }
     })
 }
+
 function updatePage(request, response, postData) {
-    console.log(postData.body);
     var reqStr = url.parse(request.url).query;
+    console.log("reqStr的内容:",reqStr);
     var mongodb = require("mongodb");
-    var objectID = mongodb.ObjectID(reqStr);
+    var objectId = mongodb.ObjectID(reqStr._id);
     mongoClient.connect(URL, function (e, db) {
         if (e) {
             console.log(e);
         }
         else {
             var page = db.collection("page");
-            console.log(objectID);
-            page.update({_id: objectID}, {$set: {body: postData.body}}, function (e, result) {
+            page.update({_id: objectId}, {$set: {body: postData.body}}, function (e, result) {
                 response.writeHead(200, {"Content-Type": "text/html"});
                 if (e) {
                     response.write("update err");
                 }
                 else {
-                    response.write("update succeed" + '</br>' + '<a href="/load">' + "Go back indexPage" + '</a>')
+                    response.write("update succeed" + '</br>' + '<a href="/load">' + "Go back indexPage" + '</a>');
                 }
                 response.end();
             })
@@ -402,7 +343,6 @@ function checkPassword(collection, name, password, cb) {
         else {
             console.log(result);
             if (result.password == password) {
-                console.log("**********");
                 return cb(true);
             }
             else {
@@ -420,7 +360,7 @@ function insertSessions(collection, postData) {
         }
         else {
             if (result.n == 1) {
-                console.log("insert sessions succeed")
+                console.log("insert sessions succeed");
                 return true;
             }
             else {
