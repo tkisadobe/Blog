@@ -122,13 +122,81 @@ function loginJudge(request, response, postData) {
                 if (result) {
                     insertSessions(user, postData);
                     response.writeHead(200, {"Content-Type": "text/html", "Set-Cookie": "message=" + md5(postData)});
-                    response.write("Hello "+postData.username + '</br>' + '<a href="/load">' + "Go back indexPage" + '</a>');
+                    response.write("Hello "+postData.username + '</br>' + '<a href="/homePage">' + "Go to homePage" + '</a>');
                     response.end();
                 }
                 else {
                     response.writeHead(200, {"Content-Type": "text/html"});
                     response.write("login failed");
                     response.end();
+                }
+            });
+        }
+    });
+}
+
+function homePage(request,response,result) {
+    var data={
+        title:"个人主页",
+        author:'@lhy',
+        tags: ['express', 'node', 'javascript'],
+        result:result
+    }
+    render_template('html/homePage.html',data,response);
+}
+
+function showHomePage(request,response,postData) {
+    mongoClient.connect(URL,function (e,db) {
+        if(e){
+            console.log(e);
+        }
+        else{
+            var page=db.collection('page');
+            var user=db.collection('user');
+            var Cookies={};
+            request.headers.cookie && request.headers.cookie.split(';').forEach(function (Cookie) {
+                var parts=Cookie.split('=');
+                Cookies[parts[0].trim()]=(parts[1] || '').trim();
+            });
+            user.findOne({sessions:Cookies.message},function (e,result) {
+                if(e){
+                    console.log(e);
+                }
+                else{
+                    homePage(request,response,result);
+                    db.close();
+                }
+            })
+        }
+    })
+}
+
+function showBlog(request, response, result) {
+    var data = {
+        author: '@lhy',
+        tags: ['express', 'node', 'javascript'],
+        result: result
+    };
+    //console.log('this is null',util.inspect(result, false, null));
+    render_template('html/showBlog.html', data, response);
+}
+
+function findBlog(request, response,postData) {
+    mongoClient.connect(URL, function (e, db) {
+        if (e) {
+            console.log('error',e);
+        }
+        else {
+            var page = db.collection("page");
+            var reqData = querystring.parse(url.parse(request.url).query);
+            var objectID = new ObjectID(reqData._id);
+            page.findOne({_id: objectID}, function (e, result) {
+                if (e) {
+                    console.log(e);
+                }
+                else {
+                    showBlog(request,response, result);
+                    db.close();
                 }
             });
         }
@@ -144,15 +212,6 @@ function register(request, response, postData) {
     render_template('html/register.html', data, response);
 }
 
-function showBlog(request, response, result) {
-    var data = {
-        author: '@lhy',
-        tags: ['express', 'node', 'javascript'],
-        result: result
-    };
-    //console.log('this is null',util.inspect(result, false, null));
-    render_template('html/showBlog.html', data, response);
-}
 
 function load(request, response, postData) {
     mongoClient.connect(URL, function (e, db) {
@@ -178,31 +237,7 @@ function load(request, response, postData) {
         }
     });
 }
-function findBlog(request, response,postData) {
-    mongoClient.connect(URL, function (e, db) {
-        if (e) {
-            console.log('error',e);
-            response.write('fix');
-        }
-        else {
-            var page = db.collection("page");
-            var reqData = querystring.parse(url.parse(request.url).query);
-            console.log('req',reqData);
-            var objectID = new ObjectID(reqData._id);
-            page.findOne({_id: objectID}, function (e, result) {
-                if (e) {
-                    console.log(e);
-                }
-                else {
-                    insertSessions(page,postData);
-                    console.log(util.inspect(result, false, null));
-                    showBlog(request,response, result);
-                    db.close();
-                }
-            });
-        }
-    });
-}
+
 
 
 function selectOneBlog(request, response, postData) {
@@ -245,15 +280,14 @@ function insertPage(request, response, postData) {
             var page = db.collection("page");
             var user = db.collection("user");
             var Cookies = {};
-            console.log("cookie的内容:",request.headers.cookie);
             request.headers.cookie && request.headers.cookie.split(';').forEach(function (Cookie) {
                 var parts = Cookie.split('=');
                 Cookies[parts[0].trim()] = (parts[1] || '').trim();
             });
-            console.log("cookie message的内容:",Cookies.message);
+            console.log("Cookies.message的内容是:",Cookies.message);
             user.findOne({sessions: Cookies.message}, {}, function (e, result) {
-                console.log("result的内容:",result);
                 var ownerId = new ObjectID(postData._id);
+                console.log("ownerId的内容:",ownerId);
                 var data = {
                     title: postData.title,
                     body: postData.body,
@@ -261,7 +295,6 @@ function insertPage(request, response, postData) {
                     author: ownerId,
                     tag: postData.tag
                 };
-                console.log("data的内容:",data);
                 page.insert(data, function (e, result) {
                     if (e) {
                         console.log(e);
@@ -415,3 +448,5 @@ exports.selectBlog = selectBlog;
 exports.selectOneBlog = selectOneBlog;
 exports.adminLogin=adminLogin;
 exports.adminLoginJudge=adminLoginJudge;
+exports.homePage=homePage;
+exports.showHomePage=showHomePage;
