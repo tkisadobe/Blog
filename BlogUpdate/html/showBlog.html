@@ -14,10 +14,11 @@
     <p>标签:{{result.tag}}</p>
 </article>
 <a href=/removePage?{{result._id}}>删除</a>
-<a href=/updatePage?{{result._id}}>更新</a>
-<form action="/updatePage" method="post">
-    <textarea placeholder="更新的文本内容" name="body" data-value="{{result.body}}"></textarea></br>
-    <input type="submit" value="update">
+
+
+<form action="updatePage?{{result._id}}"  method="post">
+    <textarea placeholder="更新的文本内容" name="body"> </textarea></br>
+    <input type="submit" value="更新">
 </form>
 </body>
 </html>

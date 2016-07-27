@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<link rel="stylesheet" href="../static/bower_components/bootstrap/dist/css/bootstrap.min.css">
+<head>
+    <meta charset="UTF-8">
+    <title>管理员登陆</title>
+</head>
+<body>
+<h1>管理员登陆</h1>
+<p>请输入用户名和密码:</p>
+<form action="/adminLoginJudge" method="post">
+    <input type="text" placeholder="用户名" name="username" id="username"> </br>
+    <input type="password" placeholder="密码" name="password" id="password"> </br>
+    <input type="submit" onsubmit="encrypt()" value="登陆">
+</form>
+
+</body>
+</html>

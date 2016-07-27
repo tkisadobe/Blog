@@ -15,7 +15,6 @@ var handlebars = require('handlebars');
 
 function render_template(template_str, template_data, response) {
     fs.readFile(template_str, 'utf-8', function (error, source) {
-        //console.log('err', error);
         handlebars.registerHelper('custom_title', function (title) {
             var words = title.split(' ');
             for (var i = 0; i < words.length; i++) {
@@ -77,9 +76,40 @@ function login(request, response, postData) {
         tags: ['express', 'node', 'javascript']
     };
     render_template('html/login.html', data, response);
-
 }
 
+function adminLogin(request,response,postData) {
+    var data={
+        title:'管理员登陆',
+        author:'@lhy',
+        tags: ['express', 'node', 'javascript']
+    };
+    render_template('html/admin_login.html', data, response);
+}
+
+function adminLoginJudge(request, response, postData) {
+    mongoClient.connect(URL,function (e,db) {
+        if(e){
+            console.log(e);
+        }
+        else{
+            var admin=db.collection("admin");
+            var result=checkPassword(admin,postData.username,postData.password,function (result) {
+                if(result){
+                    insertSessions(admin,postData);
+                    response.writeHead(200,{"Content-Type":"text/html","Set-Cookie":"message="+md5(postData)});
+                    response.write("Hello "+postData.username+ '</br>' + '<a href="/load">' + "Go back indexPage" + '</a>');
+                    response.end();
+                }
+                else{
+                    response.writeHead(200,{"Content-Type":"text/html"});
+                    response.write("admin login failed");
+                    response.end();
+                }
+            })
+        }
+    })
+}
 
 function loginJudge(request, response, postData) {
     mongoClient.connect(URL, function (e, db) {
@@ -92,7 +122,7 @@ function loginJudge(request, response, postData) {
                 if (result) {
                     insertSessions(user, postData);
                     response.writeHead(200, {"Content-Type": "text/html", "Set-Cookie": "message=" + md5(postData)});
-                    response.write("login succeed" + '</br>' + '<a href="/load">' + "Go back indexPage" + '</a>');
+                    response.write("Hello "+postData.username + '</br>' + '<a href="/load">' + "Go back indexPage" + '</a>');
                     response.end();
                 }
                 else {
@@ -118,8 +148,7 @@ function showBlog(request, response, result) {
     var data = {
         author: '@lhy',
         tags: ['express', 'node', 'javascript'],
-        result: result,
-        request:request
+        result: result
     };
     //console.log('this is null',util.inspect(result, false, null));
     render_template('html/showBlog.html', data, response);
@@ -183,19 +212,20 @@ function selectOneBlog(request, response, postData) {
         }
         else {
             var page = db.collection("page");
-            page.find({title: postData.title}, function (e, result) {
+            var reqData = querystring.parse(url.parse(request.url).query);
+            page.findOne({title: reqData.title}, function (e, result) {
                 if (e) {
                     console.log(e);
                 }
                 else {
-                    console.log(result);
                     if (result) {
-                        showBlog(response, result);
+                        console.log(result);
+                        showBlog(request,response,result);
                         db.close();
                     }
                     else {
                         response.writeHead(200, {"Content-Type": "text/plain"});
-                        response.write("Don't find");
+                        response.write("Didn't found");
                         response.end();
                         db.close();
                     }
@@ -215,14 +245,14 @@ function insertPage(request, response, postData) {
             var page = db.collection("page");
             var user = db.collection("user");
             var Cookies = {};
-            console.log(request.headers.cookie);
+            console.log("cookie的内容:",request.headers.cookie);
             request.headers.cookie && request.headers.cookie.split(';').forEach(function (Cookie) {
                 var parts = Cookie.split('=');
                 Cookies[parts[0].trim()] = (parts[1] || '').trim();
             });
-            console.log(Cookies.message);
+            console.log("cookie message的内容:",Cookies.message);
             user.findOne({sessions: Cookies.message}, {}, function (e, result) {
-                console.log(result);
+                console.log("result的内容:",result);
                 var ownerId = new ObjectID(postData._id);
                 var data = {
                     title: postData.title,
@@ -231,6 +261,7 @@ function insertPage(request, response, postData) {
                     author: ownerId,
                     tag: postData.tag
                 };
+                console.log("data的内容:",data);
                 page.insert(data, function (e, result) {
                     if (e) {
                         console.log(e);
@@ -276,16 +307,14 @@ function removePage(request, response) {
 
 function updatePage(request, response, postData) {
     var reqStr = url.parse(request.url).query;
-    console.log("reqStr的内容:",reqStr);
-    var mongodb = require("mongodb");
-    var objectId = mongodb.ObjectID(reqStr._id);
+    var objectid= new ObjectID(reqStr);
     mongoClient.connect(URL, function (e, db) {
         if (e) {
             console.log(e);
         }
         else {
             var page = db.collection("page");
-            page.update({_id: objectId}, {$set: {body: postData.body}}, function (e, result) {
+            page.update({_id: objectid}, {$set: {body: postData.body}}, function (e, result) {
                 response.writeHead(200, {"Content-Type": "text/html"});
                 if (e) {
                     response.write("update err");
@@ -301,15 +330,17 @@ function updatePage(request, response, postData) {
 
 function insertUser(request, response, postData) {
     var reqStr = url.parse(request.url).query;
-    var reqData = querystring.parse(reqStr);
-    var data = {name: reqData.username, password: reqData.password};
+    var objectid=new ObjectID(reqStr);
+    console.log("postData.username:",postData.username);
+    var data = {name: postData.username, password: postData.password};
     mongoClient.connect(URL, function (e, db) {
         if (e) {
             console.log(e);
         }
         else {
             var user = db.collection("user");
-            user.findOne({name: reqData.username}, function (e, result) {
+            user.findOne({_id: objectid}, function (e, result) {
+                console.log("result:",result)
                 if (result == null) {
                     user.insert(data, function (e, result) {
                         if (e) {
@@ -318,7 +349,7 @@ function insertUser(request, response, postData) {
                         else {
                             console.log("add user succeed");
                             response.writeHead(200, {"Content-type": "text/html"});
-                            response.write("register succeed" + '</br>' + '<a href="/load">' + "Go back indexPage" + '</a>');
+                            response.write("register succeed! Hello "+postData.username + '</br>' + '<a href="/login">' + "Go to login" + '</a>');
                             response.end();
                         }
                     });
@@ -382,3 +413,5 @@ exports.insertUser = insertUser;
 exports.updatePage = updatePage;
 exports.selectBlog = selectBlog;
 exports.selectOneBlog = selectOneBlog;
+exports.adminLogin=adminLogin;
+exports.adminLoginJudge=adminLoginJudge;
