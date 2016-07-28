@@ -219,7 +219,6 @@ function classification(request,response,postData) {
         else{
             var page=db.collection('page');
             var user=db.collection('user');
-            var titleList={};
             var reqData=querystring.parse(url.parse(request.url).query);
             console.log("reqData:",reqData);
             console.log("reqData.tag:",reqData.tag);
@@ -228,24 +227,21 @@ function classification(request,response,postData) {
                     console.log(e);
                 }
                 else{
-                    for (var i = 0; i < items.length; i++) {
-                        titleList +=
-                            '<a href=/findBlog?_id=' + items[i]._id + '>' + '<li>' + items[i].title + '</li>' + '</a>';
-                    }
-                    classPage(request, response, items, postData);
+                    console.log("items",items);
+                    classPage(request, response, items, reqData);
                 }
             })
         }
     })
 }
 
-function classPage(request,response,items,result) {
+function classPage(request,response,items,reqData) {
     var data = {
         title: '简单的博客',
         author: '@lhy',
         tags: ['express', 'node', 'javascript'],
-        request:request,
-        result:result
+        items:items,
+        reqData:reqData
     };
     // 这里把需要模版地址写好，注意是相对于本文件的
     render_template('html/classPage.html', data, response);

@@ -6,9 +6,9 @@
     <title>显示分类文章</title>
 </head>
 <body>
-<h1>{{result.tag}}类</h1>
+<h1>{{reqData.tag}}类</h1>
 <article>
-    {{#each result}}
+    {{#each items}}
     <li value="hot" ><a href="/findBlog?_id={{_id}}">{{title}}</a></li>
     {{/each}}
 </article>
