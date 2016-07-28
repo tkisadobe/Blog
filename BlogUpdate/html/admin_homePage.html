@@ -33,12 +33,12 @@
             <a class="navbar-brand" href="#">Blog Administrator</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
-            <form class="navbar-form navbar-right">
+            <form class="navbar-form navbar-right" action="/adminLoginJudge" method="post">
                 <div class="form-group">
-                    <input type="text" placeholder="用户名" class="form-control">
+                    <input type="text" placeholder="用户名" class="form-control" name="username">
                 </div>
                 <div class="form-group">
-                    <input type="password" placeholder="密码" class="form-control">
+                    <input type="password" placeholder="密码" class="form-control" name="password">
                 </div>
                 <button type="submit" class="btn btn-success">管理员登陆</button>
             </form>
@@ -49,7 +49,7 @@
 <!-- Main jumbotron for a primary marketing message or call to action -->
 <div class="jumbotron">
     <div class="container">
-        <h1>你好!</h1>
+        <h1>你好{{result.name}}!</h1>
         <p>这里只显示了简单的用户管理</p>
         <!--<p><a class="btn btn-primary btn-lg" href="#" role="button">Learn more &raquo;</a></p>-->
     </div>
@@ -59,14 +59,20 @@
     <!-- Example row of columns -->
     <div class="row">
         <div class="col-md-4">
-            <h2>Heading</h2>
-            <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-            <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
+            <h2>管理用户信息</h2>
+            <ol class="list-unstyled">
+                {{#each items}}
+                <li value="class"><a href=/findUserInfo?_id={{_id}}>{{name}}</a></li>
+                {{/each}}
+            </ol>
         </div>
         <div class="col-md-4">
-            <h2>Heading</h2>
-            <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-            <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
+            <h2>本站的所有文章</h2>
+            <ol class="list-unstyled">
+                {{#each articles}}
+                <li value="class"><a href=/findBlog?_id={{_id}}>{{title}}</a></li>
+                {{/each}}
+            </ol>
         </div>
         <div class="col-md-4">
             <h2>Heading</h2>

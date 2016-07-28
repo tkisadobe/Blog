@@ -83,7 +83,7 @@ function adminLogin(request,response,postData) {
         author:'@lhy',
         tags: ['express', 'node', 'javascript']
     };
-    render_template('html/admin_login.html', data, response);
+    render_template('html/admin_homePage.html', data, response);
 }
 
 function adminLoginJudge(request, response, postData) {
@@ -93,11 +93,11 @@ function adminLoginJudge(request, response, postData) {
         }
         else{
             var admin=db.collection("admin");
-            var result=checkPassword(admin,postData.username,postData.password,function (result) {
+            checkPassword(admin,postData.username,postData.password,function (result) {
                 if(result){
                     insertSessions(admin,postData);
-                    response.writeHead(200,{"Content-Type":"text/html","Set-Cookie":"message="+md5(postData)});
-                    response.write("Hello "+postData.username+ '</br>' + '<a href="/load">' + "Go back indexPage" + '</a>');
+                    response.writeHead(200,{"Content-Type":"text/html","Set-Cookie":"message="+md5(postData.username+postData.password)});
+                    response.write("Hello "+postData.username+ '</br>' + '<a href="/showAdminHomePage">' + "Go to adminHomePage" + '</a>');
                     response.end();
                 }
                 else{
@@ -109,40 +109,122 @@ function adminLoginJudge(request, response, postData) {
         }
     })
 }
+function adminHomePage(request,response,items,articles,result) {
+    var data={
+        title:'管理员登陆',
+        author:'@lhy',
+        tags: ['express', 'node', 'javascript'],
+        items:items,
+        result:result,
+        articles:articles
+    };
+    render_template('html/admin_homePage.html', data, response);
+}
 
-function loginJudge(request, response, postData) {
-    mongoClient.connect(URL, function (e, db) {
-        if (e) {
+function showAdminHomePage(request,response,postData) {
+    mongoClient.connect(URL,function (e,db) {
+        if(e){
             console.log(e);
         }
+        else{
+            var page=db.collection('page');
+            var user=db.collection('user');
+            var admin=db.collection('admin');
+            var Cookies={};
+            request.headers.cookie && request.headers.cookie.split(';').forEach(function (Cookie) {
+                var parts=Cookie.split('=');
+                Cookies[parts[0].trim()]=(parts[1] || '').trim();
+            });
+            admin.findOne({"sessions.md5Message":Cookies.message},function (e,result) {
+                if(e){
+                    console.log(e);
+                }
+                else{
+                    console.log("result的内容:",result);
+                    user.find({},{name:1}).toArray(function (e,items) {
+                        if(e){
+                            console.log(e);
+                        }
+                        else{
+                            page.find({},{title:1}).toArray(function (e,articles) {
+                                if(e){
+                                    console.log(e);
+                                }
+                                else{
+                                    console.log("articles:",articles);
+                                }
+                                adminHomePage(request,response,items,articles,result);
+                            })
+                            console.log("items:",items);
+                        }
+                    })
+                }
+            })
+        }
+    })
+}
+function findBlog(request, response,postData) {
+    mongoClient.connect(URL, function (e, db) {
+        if (e) {
+            console.log('error',e);
+        }
         else {
-            var user = db.collection("user");
-            checkPassword(user, postData.username, postData.password, function (result) {
-                if (result) {
-                    insertSessions(user, postData);
-                    response.writeHead(200, {"Content-Type": "text/html", "Set-Cookie": "message=" + md5(postData.username+postData.password)});
-                    response.write("Hello "+postData.username + '</br>' + '<a href="/showHomePage">' + "Go to homePage" + '</a>');
-                    response.end();
+            var page = db.collection("page");
+            var reqData = querystring.parse(url.parse(request.url).query);
+            var objectID = new ObjectID(reqData._id);
+            console.log('objectID:',objectID);
+            page.findOne({_id: objectID}, function (e, result) {
+                if (e) {
+                    console.log(e);
                 }
                 else {
-                    response.writeHead(200, {"Content-Type": "text/html"});
-                    response.write("login failed");
-                    response.end();
+                    showBlog(request,response, result);
                 }
             });
         }
     });
 }
 
-function homePage(request,response,items,result) {
+function findUserInfo(request, response,postData) {
+    mongoClient.connect(URL,function (e,db) {
+        if(e){
+            console.log(e);
+        }
+        else{
+            var user=db.collection('user');
+            var page=db.collection('page');
+            var reqData=querystring.parse(url.parse(request.url).query);
+            var objectID=new ObjectID(reqData._id);
+            user.findOne({_id:objectID},function (e,result) {
+                if(e){
+                    console.log(e);
+                }
+                else{
+                    page.find({author:result.name},{title:1}).toArray(function (e,articles) {
+                        if(e){
+                            console.log(e);
+                        }
+                        else{
+                            console.log("articles:",articles);
+                            userInfo(request,response,result,articles);
+                        }
+                    })
+                }
+            })
+            
+        }
+    })
+}
+
+function userInfo(request,response,result,articles) {
     var data={
-        title:"个人主页",
+        title:'用户信息界面',
         author:'@lhy',
         tags: ['express', 'node', 'javascript'],
         result:result,
-        articles:items
+        articles:articles
     };
-    render_template('html/homePage.html',data,response);
+    render_template('html/user_Info.html', data, response);
 }
 
 function showHomePage(request,response,postData) {
@@ -179,6 +261,40 @@ function showHomePage(request,response,postData) {
         }
     })
 }
+function loginJudge(request, response, postData) {
+    mongoClient.connect(URL, function (e, db) {
+        if (e) {
+            console.log(e);
+        }
+        else {
+            var user = db.collection("user");
+            checkPassword(user, postData.username, postData.password, function (result) {
+                if (result) {
+                    insertSessions(user, postData);
+                    response.writeHead(200, {"Content-Type": "text/html", "Set-Cookie": "message=" + md5(postData.username+postData.password)});
+                    response.write("Hello "+postData.username + '</br>' + '<a href="/showHomePage">' + "Go to homePage" + '</a>');
+                    response.end();
+                }
+                else {
+                    response.writeHead(200, {"Content-Type": "text/html"});
+                    response.write("login failed");
+                    response.end();
+                }
+            });
+        }
+    });
+}
+
+function homePage(request,response,items,result) {
+    var data={
+        title:"个人主页",
+        author:'@lhy',
+        tags: ['express', 'node', 'javascript'],
+        result:result,
+        articles:items
+    };
+    render_template('html/homePage.html',data,response);
+}
 
 function showBlog(request, response, result) {
     var data = {
@@ -190,27 +306,7 @@ function showBlog(request, response, result) {
     render_template('html/showBlog.html', data, response);
 }
 
-function findBlog(request, response,postData) {
-    mongoClient.connect(URL, function (e, db) {
-        if (e) {
-            console.log('error',e);
-        }
-        else {
-            var page = db.collection("page");
-            var reqData = querystring.parse(url.parse(request.url).query);
-            var objectID = new ObjectID(reqData._id);
-            console.log('objectID:',objectID);
-            page.findOne({_id: objectID}, function (e, result) {
-                if (e) {
-                    console.log(e);
-                }
-                else {
-                    showBlog(request,response, result);
-                }
-            });
-        }
-    });
-}
+
 function classification(request,response,postData) {
     mongoClient.connect(URL,function (e,db) {
         if(e){
@@ -243,7 +339,6 @@ function classPage(request,response,items,reqData) {
         items:items,
         reqData:reqData
     };
-    // 这里把需要模版地址写好，注意是相对于本文件的
     render_template('html/classPage.html', data, response);
 }
 
@@ -371,7 +466,7 @@ function removePage(request, response) {
                     response.write("delete err");
                 }
                 else {
-                    response.write("delete succeed" + '</br>' + '<a href="/showHomePage">' + "Go back toHomePage" + '</a>');
+                    response.write("delete succeed" + '</br>' + '<a href="/load">' + "Go back to index" + '</a>');
                 }
                 response.end();
             })
@@ -394,12 +489,39 @@ function updatePage(request, response, postData) {
                     response.write("update err");
                 }
                 else {
-                    response.write("update succeed" + '</br>' + '<a href="/showHomePage">' + "Go back to homePage" + '</a>');
+                    response.write("update succeed" + '</br>' + '<a href="/load">' + "Go back to index" + '</a>');
                 }
                 response.end();
             })
         }
     })
+}
+
+function updateUserInfo(request, response, postData) {
+    var reqStr=url.parse(request.url).query;
+    var objectid=new ObjectID(reqStr);
+    console.log("reqStr:",reqStr);
+    console.log("objectid:",objectid);
+    mongoClient.connect(URL,function (e,db) {
+        if(e){
+            console.log(e);
+        }
+        else{
+            var user=db.collection('user');
+            user.update({_id:objectid},{$set:{password:postData.body}},function (e,result) {
+                if(e){
+                    console.log(e);
+                    response.write("update password error");
+                }
+                else{
+                    response.writeHead(200,{"Content-Type":"text/html"});
+                    response.write("update succeed" + '</br>' + '<a href="/showAdminHomePage">' + "Go back to adminHomePage" + '</a>');
+                }
+                response.end();
+            })
+        }
+    })
+    
 }
 
 function insertUser(request, response, postData) {
@@ -486,3 +608,6 @@ exports.adminLoginJudge=adminLoginJudge;
 exports.homePage=homePage;
 exports.showHomePage=showHomePage;
 exports.classification=classification;
+exports.showAdminHomePage=showAdminHomePage;
+exports.findUserInfo=findUserInfo;
+exports.updateUserInfo=updateUserInfo;
