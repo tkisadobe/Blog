@@ -23,4 +23,5 @@ handle["/insertUser"]=requestHandler.insertUser;
 handle["/updatePage"]=requestHandler.updatePage;
 handle["/selectBlog"]=requestHandler.selectBlog;
 handle["/selectOneBlog"]=requestHandler.selectOneBlog;
+handle["/classification"]=requestHandler.classification;
 server.start(router.route,handle);

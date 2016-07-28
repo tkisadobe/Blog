@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<link rel="stylesheet" href="../static/bower_components/bootstrap/dist/css/bootstrap.min.css">
+<head>
+    <meta charset="UTF-8">
+    <title>显示分类文章</title>
+</head>
+<body>
+<h1>{{result.tag}}类</h1>
+<article>
+    {{#each result}}
+    <li value="hot" ><a href="/findBlog?_id={{_id}}">{{title}}</a></li>
+    {{/each}}
+</article>
+
+</body>
+</html>

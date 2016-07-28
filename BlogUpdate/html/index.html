@@ -11,9 +11,8 @@
 <p><a href="/register" >注册</a></p>
 <p><a href="/login">用户登陆</a></p>
 <p><a href="/adminLogin"> 管理员登陆</a></p>
-<p><a href="/writeBlog">写博客</a></p>
-<p><a href="/selectBlog">找博客</a></p>
-<ul class="none">
+<h2>热门文章:</h2>
+<ul >
     {{#each articles}}
     <li value="hot" ><a href="/findBlog?_id={{_id}}">{{title}}</a></li>
     {{/each}}
