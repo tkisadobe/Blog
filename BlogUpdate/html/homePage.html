@@ -20,12 +20,11 @@
 </head>
 
 <body>
-
 <div class="blog-masthead">
     <div class="container">
         <nav class="blog-nav">
             <a class="blog-nav-item" href="#">个人首页</a>
-            <a class="blog-nav-item" href="#">新鲜事</a>
+            <a class="blog-nav-item" href="/load">回主页</a>
             <a class="blog-nav-item" href="#">关于</a>
         </nav>
     </div>
@@ -44,14 +43,25 @@
 
             <div class="blog-post">
 
+                <form action="/uploadPicture" enctype="multipart/form-data" method="post">
+                    <input type="file" name="picture" multiple="multiple">
+                    <input type="submit" value="上传照片" >
+                </form>
+                <hr>
+
+
                 <p><a href="/writeBlog">写博客</a></p>
                 <p><a href="/selectBlog">找博客</a></p>
 
 
 
-                <h2 class="blog-post-title">第一篇文章的标题</h2>
-                <p class="blog-post-meta">January 1, 2014 by <a href="#">Mark</a></p>
-                <p>介绍介绍各种介绍看看就好</p>
+                {{#each articles}}
+                <hr>
+                <h2 class="blog-post-title">{{title}}</h2>
+                <p class="blog-post-meta">{{date}}</p>
+                <p>{{body}}</p>
+                <hr>
+                {{/each}}
                 <hr>
                 <p>哔哔哔哔哔哔哔各种哔哔 <a href="#">呵呵哒</a>,继续哔哔</p>
                 <blockquote>
@@ -92,7 +102,7 @@
         <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
             <div class="sidebar-module sidebar-module-inset">
                 <h4>关于</h4>
-                <p>这是一个初学者的博客,丑也没有办法</p>
+                <p>这是一个初学者的博客,丑也没有办法,打我呀</p>
             </div>
             <div class="sidebar-module">
                 <h4>文章列表</h4>
@@ -105,8 +115,8 @@
             <div class="sidebar-module">
                 <h4>分类</h4>
                 <ol class="list-unstyled">
-                    {{#each articles}}
-                    <li value="class"><a href="/classification?tag={{tag}}">{{tag}}</a></li>
+                    {{#each tags}}
+                    <li value="class"><a href="/classification?tag={{this}}">{{this}}</a></li>
                     {{/each}}
                 </ol>
             </div>

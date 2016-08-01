@@ -11,6 +11,10 @@ var URL = "mongodb://localhost:27017/test";
 var fs = require("fs"),
     formidable = require("formidable");
 var handlebars = require('handlebars');
+var blog_util=require('./blog_util');
+
+var log=blog_util.log;
+var uniq=blog_util.uniq;
 
 
 function render_template(template_str, template_data, response) {
@@ -36,6 +40,8 @@ function render_template(template_str, template_data, response) {
 
 
 function indexPage(request, response, items, postData) {
+    log(request);
+    log(postData);
     // var template = Handlebars.compile('hml/index.html');
     // 这里传值
     console.log('index',util.inspect(items, false, null));
@@ -50,6 +56,8 @@ function indexPage(request, response, items, postData) {
 }
 
 function selectBlog(request, response, postData) {
+    log(request);
+    log(postData);
     var data = {
         title: '查找文章',
         author: '@lhy',
@@ -60,6 +68,8 @@ function selectBlog(request, response, postData) {
 }
 
 function writeBlog(request, response, postData) {
+    log(request);
+    log(postData);
     var data={
         title:'随笔',
         author:'@lhy',
@@ -69,6 +79,8 @@ function writeBlog(request, response, postData) {
 }
 
 function login(request, response, postData) {
+    log(request);
+    log(postData);
     var data={
         title:'登陆',
         author:'@lhy',
@@ -78,6 +90,8 @@ function login(request, response, postData) {
 }
 
 function adminLogin(request,response,postData) {
+    log(request);
+    log(postData);
     var data={
         title:'管理员登陆',
         author:'@lhy',
@@ -87,6 +101,7 @@ function adminLogin(request,response,postData) {
 }
 
 function adminLoginJudge(request, response, postData) {
+    log(request);
     mongoClient.connect(URL,function (e,db) {
         if(e){
             console.log(e);
@@ -110,6 +125,7 @@ function adminLoginJudge(request, response, postData) {
     })
 }
 function adminHomePage(request,response,items,articles,result) {
+    log(request);
     var data={
         title:'管理员登陆',
         author:'@lhy',
@@ -122,6 +138,7 @@ function adminHomePage(request,response,items,articles,result) {
 }
 
 function showAdminHomePage(request,response,postData) {
+    log(postData);
     mongoClient.connect(URL,function (e,db) {
         if(e){
             console.log(e);
@@ -154,7 +171,7 @@ function showAdminHomePage(request,response,postData) {
                                     console.log("articles:",articles);
                                 }
                                 adminHomePage(request,response,items,articles,result);
-                            })
+                            });
                             console.log("items:",items);
                         }
                     })
@@ -162,6 +179,28 @@ function showAdminHomePage(request,response,postData) {
             })
         }
     })
+}
+
+function indexFindBlog(request, response,postData) {
+    mongoClient.connect(URL, function (e, db) {
+        if (e) {
+            console.log('error',e);
+        }
+        else {
+            var page = db.collection("page");
+            var reqData = querystring.parse(url.parse(request.url).query);
+            var objectID = new ObjectID(reqData._id);
+            console.log('objectID:',objectID);
+            page.findOne({_id: objectID}, function (e, result) {
+                if (e) {
+                    console.log(e);
+                }
+                else {
+                    indexShowBlog(request,response, result);
+                }
+            });
+        }
+    });
 }
 function findBlog(request, response,postData) {
     mongoClient.connect(URL, function (e, db) {
@@ -247,13 +286,20 @@ function showHomePage(request,response,postData) {
                 }
                 else{
                     console.log("result的内容:",result);
-                    page.find({author:result.name},{title:1,tag:1}).toArray(function (e,items) {
+                    //result是当前登陆的用户
+                    page.find({author:result.name},{title:1,body:1,date:1}).toArray(function (e,items) {
                         if(e){
                             console.log(e);
                         }
                         else{
                             console.log("items的内容:",items);
-                            homePage(request,response,items,result);
+                            user.find({name:result.name},{tag:1}).toArray(function (e,tags) {
+                                if(e){console.log(e);}
+                                else{
+                                    homePage(request,response,items,tags,result);
+                                    //items是该用户发表的文章列表,tags存放了所有不重复的标签
+                                }
+                            });
                         }
                     });
                 }
@@ -285,13 +331,13 @@ function loginJudge(request, response, postData) {
     });
 }
 
-function homePage(request,response,items,result) {
+function homePage(request,response,items,tags,result) {
     var data={
         title:"个人主页",
         author:'@lhy',
-        tags: ['express', 'node', 'javascript'],
         result:result,
-        articles:items
+        articles:items,
+        tags:uniq(tags[0]['tag'])
     };
     render_template('html/homePage.html',data,response);
 }
@@ -304,6 +350,15 @@ function showBlog(request, response, result) {
     };
     //console.log('this is null',util.inspect(result, false, null));
     render_template('html/showBlog.html', data, response);
+}
+
+function indexShowBlog(request, response, result) {
+    var data = {
+        author: '@lhy',
+        tags: ['express', 'node', 'javascript'],
+        result: result
+    };
+    render_template('html/indexShowBlog.html', data, response);
 }
 
 
@@ -431,7 +486,6 @@ function insertPage(request, response, postData) {
                      author: result.name,
                      tag: postData.tag
                  };
-                    user.update({name:result.name},{$push:{articles:[{title: postData.title, body: postData.body, tag: postData.tag}]}});
                     page.insert(data, function (e, result) {
                         if (e) {
                          console.log(e);
@@ -442,11 +496,31 @@ function insertPage(request, response, postData) {
                             response.end();
                      }
                  });
-             }
+                    user.find({name:result.name},{tag:1}).toArray(function (e,tags) {
+                        if(e){
+                            console.log(e);
+                        }
+                        else{
+                            console.log("postData.tag:",postData.tag);
+                            console.log("result.name:",result.name);
+                            for(var i=0;i<tags.length;i++){
+                                if(postData.tag!=tags[i].tag){
+                                    user.update({name:result.name},{$push:{tag:postData.tag}},function (e,res) {
+                                        if(e){
+                                            console.log(e);
+                                        }
+                                        else{
+                                            console.log(res);
+                                        }
+                                    })
+                                }
+                            }
+                        }
+                    })
+                 }
             });
         }
     });
-
 }
 
 
@@ -521,11 +595,10 @@ function updateUserInfo(request, response, postData) {
             })
         }
     })
-    
 }
 
 function insertUser(request, response, postData) {
-    var data = {name: postData.username, password: postData.password,sessions:null,articles:[{}]};
+    var data = {name: postData.username, password: postData.password,sessions:null};
     mongoClient.connect(URL, function (e, db) {
         if (e) {
             console.log(e);
@@ -590,6 +663,45 @@ function insertSessions(collection, postData) {
         });
 }
 
+function uploadPicture(request,response,postData) {
+    mongoClient.connect(URL,function (e,db) {
+        if(e){
+            console.log(e);
+        }
+        else{
+            var user=db.collection('user');
+            var form = new formidable.IncomingForm();
+            
+            form.parse(request,function (e,fields,files) {
+                if(e){
+                    console.log(e);
+                }
+                else{
+                    fs.renameSync(files.upload.path, "/Users/lihaiyan/Downloads/1.jpg");
+                    response.writeHead(200,{"Content-Type":"text/html"});
+                    response.write("receive image:<br/>");
+                    response.write("<img src='/show' />");
+                    response.end();
+                }
+            })
+        }
+    });
+}
+
+function showPicture(request,response,postData) {
+    fs.readFile("/Users/lihaiyan/Downloads/1.JPG","binary",function (e,file) {
+        if(e){
+            response.writeHead(500, {"Content-Type": "text/plain"});
+            response.write(error + "\n");
+            response.end();
+        }
+        else{
+            response.writeHead(200, {"Content-Type": "image/png"});
+            response.write(file, "binary");
+            response.end();
+        }
+    })
+}
 
 exports.writeBlog = writeBlog;
 exports.login = login;
@@ -610,4 +722,7 @@ exports.showHomePage=showHomePage;
 exports.classification=classification;
 exports.showAdminHomePage=showAdminHomePage;
 exports.findUserInfo=findUserInfo;
+exports.indexFindBlog=indexFindBlog;
 exports.updateUserInfo=updateUserInfo;
+exports.uploadPicture=uploadPicture;
+exports.showPicture=showPicture;
